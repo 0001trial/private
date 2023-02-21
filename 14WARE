@@ -1,804 +1,154 @@
-local Prey = nil
-local Prey2  = nil
-local DetectedDesync       = false
-local DetectedDesyncV2     = false
-local DetectedUnderGround  = false
-local DetectedUnderGround2 = false
-local DetectedFreeFall     = false
-local OldSilentAimPart     = getgenv().14WARE.Silent.Part
-local Script               = {Functions = {}}
+if not game:IsLoaded() then
+	game.Loaded:Wait()
+end
 
-local Players, Client, Mouse, RS, Camera =
-    game:GetService("Players"),
-    game:GetService("Players").LocalPlayer,
-    game:GetService("Players").LocalPlayer:GetMouse(),
-    game:GetService("RunService"),
-    game:GetService("Workspace").CurrentCamera
+-- // Edited + Optimized by trial#0001
 
-local Circle          = Drawing.new("Circle")
-local AimAssistCircle = Drawing.new("Circle")
-
-Circle.Color           = Color3.new(1,1,1)
-Circle.Thickness       = 1
-AimAssistCircle.Color     = Color3.new(1,1,1)
-AimAssistCircle.Thickness = 1
-
-Script.Functions.UpdateFOV = function ()
-    if (not Circle and not AimAssistCircle) then
-        return Circle and AimAssistCircle
-    end
-    AimAssistCircle.Visible      = getgenv().14WARE.AimAssistFOV.Visible
-    if getgenv().14WARE.AimAssistFOV.Radius then
-    AimAssistCircle.Radius       = getgenv().14WARE.AimAssistFOV.Radius * 3
-    end
-    AimAssistCircle.Filled       = getgenv().14WARE.AimAssistFOV.Filled
-    AimAssistCircle.Color        = getgenv().14WARE.AimAssistFOV.Color
-    AimAssistCircle.Transparency = getgenv().14WARE.AimAssistFOV.Transparency
-    AimAssistCircle.Position      = Vector2.new(Mouse.X, Mouse.Y + (game:GetService("GuiService"):GetGuiInset().Y))
+getgenv().WARE = {
+    Silent = {
+        ["Enabled"] = (true), -- // Use The Silent Aim Or Not
+        
+        ["Part"] = ("HumanoidRootPart"), -- // What Part It Targerts
+        ["UseAirPart"] = (false), -- // When Target Isnt On The Ground It Uses This Part
+        ["AirPart"] = ("LowerTorso"), -- // The Parts It Targets On When Player Isnt On The Ground
+        ["ClosestPart"] = (true), -- // Automatically Gets The Closest Part Of The Target And Uses That
+        
+        ["HitChance"] = (100), -- // The Chance You Will Hit The Target
+        
+        ["Humanize"] = (false), -- // Makes Soo The Silent Doesnt Hit The Same Posistion
+        ["HumanizeValue"] = (10), -- // Makes How Much Power It Changes
+        
+        ["TriggerBot"] = (false), -- // Shoots AutoMatically
+        ["UseTriggerBotKeybind"] = (true), -- // Enable / Disable TriggerBot Keybind
+        ["TriggerBotKey"] = ("N"), -- // KeyBind To Enable / Disable TriggerBot
+        
+        ["PredictMovement"] = (true), -- // Predicts Targets Movement
+        ["PredictionVelocity"] = (0.136645), -- // How Much It Predicts
+        
+        ["AntiGroundShots"] = (false), -- // Makes So You Dont Shoot The Ground
+        ["AntiGroundValue"] = (0.5), -- // How Much Velocity It Rmoves From Target
+        ["WhenAntiGroundActivate"] = (-20), -- // When Its Gonna Activate
+        
+        ["WallCheck"] = (true), -- // Checks If Theres A Wall
+        
+        ["FastRender"] = (false), -- // This Can Take Some Fps But It Makes It More Legit
+        
+        ["CheckIf_KO"] = (true), -- // Checks If Target Is Grabbed Or Knocked
+        ["CheckIf_TargetDeath"] = (true), -- // Checks If Target Is Dead
+        
+        ["UseKeybind"] = (true), -- // Use The KeyBind To Enable / Disable The Silent Aim
+        ["Keybind"] = (";") -- // The Keybind That Enables / Disables The Silent Aim
+    },
+    SilentAutoPrediction = {
+        ["Enable"] = (true), -- // Automatically Gets Good Prediction Of How Much Ping You Have
+        ["Over"] = (0.185), -- // Prediction When Your Ping Is Over 160
+        ["160"] = (0.172), -- // Prediction When Your Ping Is Over 160
+        ["150"] = (0.162), -- // Prediction When Your Ping Is Over 150
+        ["140"] = (0.153), -- // Prediction When Your Ping Is Over 140
+        ["130"] = (0.151), -- // Prediction When Your Ping Is Over 130
+        ["120"] = (0.149), -- // Prediction When Your Ping Is Over 120
+        ["110"] = (0.146), -- // Prediction When Your Ping Is Over 110
+        ["100"] = (0.138), -- // Prediction When Your Ping Is Over 100
+        ["90"] = (0.136), -- // Prediction When Your Ping Is Over 90
+        ["80"] = (0.134), -- // Prediction When Your Ping Is Over 80
+        ["70"] = (0.131), -- // Prediction When Your Ping Is Over 70
+        ["60"] = (0.1229), -- // Prediction When Your Ping Is Over 60
+        ["50"] = (0.1225), -- // Prediction When Your Ping Is Over 50
+        ["40"] = (0.1256), -- // Prediction When Your Ping Is Over 40
+        ["30"] = (0.11), -- // Prediction When Your Ping Is Over 30
+        ["20"] = (0.102), -- // Prediction When Your Ping Is Over 20
+        ["10"] = (0.07) -- // Prediction When Your Ping Is Over 10
+    },
+    GunFOV = {
+        ["Enabled"] = (true), -- // Gun Fov / Fov Is Automatically Changed To Specific Gun Equipped
     
-    Circle.Visible      = getgenv().14WARE.SilentFOV.Visible
-    if getgenv().14WARE.SilentFOV.Radius then
-    Circle.Radius       = getgenv().14WARE.SilentFOV.Radius * 3
-    end
-    Circle.Color        = getgenv().14WARE.SilentFOV.Color
-    Circle.Filled       = getgenv().14WARE.SilentFOV.Filled
-    Circle.Transparency = getgenv().14WARE.SilentFOV.Transparency
-    Circle.Position = Vector2.new(Mouse.X, Mouse.Y + (game:GetService("GuiService"):GetGuiInset().Y))
-    return Circle and AimAssistCircle
-end
+        ["Double-Barrel SG"] = {["FOV"] = 24}, -- // Db
+        ["Revolver"] = {["FOV"] = 23}, -- // Rev
+        ["SMG"] = {["FOV"] = 3}, -- // Smg
+        ["Shotgun"] = {["FOV"] = 4}, -- // Shotgun
+        ["Rifle"] = {["FOV"] = 7}, -- // Rifle
+        ["TacticalShotgun"] = {["FOV"] = 23}, -- // Rev
+        ["Silencer"] = {["FOV"] = 7}, -- // Smg
+        ["AK47"] = {["FOV"] = 7}, -- // Shotgun
+        ["AR"] = {["FOV"] = 7} -- // Rifle
+        -- // You Can Add Custom Weapons If You Want To :p
+    },
+    RangeFOV = {
+        ["Enabled"] = (false), -- // Gun Fov / Fov Is Automatically Changed To Specific Distance Between Target / This Will OverWrite GunFov
+        
+        ["Far_Activation"] = (50), -- // Just Keep It At Math.Huge
+        ["Medium_Activation"] = (52), -- // Its Using Studs
+        ["Close_Activation"] = (46), -- // Its Uisng Studs
+        
+        ["Double-Barrel SG"] = {["FAR"] = 50, ["MED"] = 50, ["Close"] = 50}, -- // Db
+        ["Revolver"] = {["FAR"] = 50, ["MED"] = 50, ["Close"] = 50}, -- // Rev
+        ["SMG"] = {["FAR"] = 3, ["MED"] = 5, ["Close"] = 7}, -- // Smg
+        ["Shotgun"] = {["FAR"] = 5, ["MED"] = 7, ["Close"] = 10}, -- // Shotgun
+        ["Rifle"] = {["FAR"] = 2, ["MED"] = 4, ["Close"] = 6},
+        ["TacticalShotgun"] = {["FAR"] = 50, ["MED"] = 50, ["Close"] = 50}, -- // Rifle
+        -- // You Can Add Custom Weapons If You Want To :p
+    },
+    SilentFOV = {
+        ["Visible"] = (false), -- // If The Circle Is Showing Or Not
+        ["Filled"] = (false), -- // If The Circle Is Filled
+        ["Transparency"] = (1), -- // The Circle Transparency
+        ["Color"] = (Color3.fromRGB(87, 237, 255)), -- // Circle Transparency
+        ["Radius"] = (15) -- // How Big The Circle Is
+    },
 
-Script.Functions.Alive = function (plr)
-    if plr and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") ~= nil and plr.Character:FindFirstChild("Humanoid") ~= nil and plr.Character:FindFirstChild("Head") ~= nil then
-        return true
-    end
-    return false
-end
+    AimAssist = {
+        ["Enabled"] = (true), -- // Use The Aim Assist Or Not
+        
+        ["Key"] = ("c"), -- // The Key To Lock Onto A Player
+        ["HoldMode"] = (false), -- // Use The Aim Assist Or Not
+        
+        ["Part"] = ("HumanoidRootPart"), -- // The Part That Aim Assist Locks On
+        ["ClosestPart"] = (false), -- // Automatically Gets The Closest Part Of The Target And Uses That
+        
+        ["DisableTargetDeath"] = (true), -- // Disables When Target Dies
+        ["DisableLocalDeath"] = (true), -- // Disables When You Died
+        ["DisableOn_KO"] = (true), -- // Disables If Target Is KO Or Grabbed
+        
+        ["UseCircleRadius"] = (false), -- // Only Locks On To People Inside The Circle
+        ["DisableOutSideCircle"] = (false), -- // If Target Is OutSide The Circle It Disables The Aim Assist
+        
+        ["UseShake"] = (true), -- // Shakes The Camera
+        ["ShakeValue"] = (3.2), -- // How Much It Shakes
+        
+        ["PredictMovement"] = (false), -- // Predicts Targets MoveMent
+        ["PredictionVelocity"] = (0.098), -- // How Much It Predicts
+        
+        ["WallCheck"] = (true), -- // Checks If Theres A Wall
+        
+        ["Smoothnes"] = (0.0098) -- // How Smooth The Aim Assist Is
+    },
+    AimAssistFOV = {
+        ["Visible"] = (false), -- // If The Circle Is Showing Or Not
+        ["Filled"] = (true), -- // If The Circle Is Filled
+        ["Transparency"] = (0.5), -- // Circle Transparency
+        ["Color"] = (Color3.fromRGB(255, 87, 87)), -- // Circle Transparency
+        ["Radius"] = (70) -- // How Big The Circle Is
+    },
+    Both = {
+        ["DetectDesync"] = (true), -- // Detects Velocity Changer + Actually Hits
+        ["DesyncDetection"] = (86), -- // When It Detects
+        
+        ["UsDetectDesyncKeybind"] = (true), -- // Enable / Disable Desync Detection Keybind
+        ["DetectDesyncKey"] = ("["), -- // KeyBind To Enable / Disable Desync Detection
+        
+        ["DetectUnderGround"] = (true), -- // Detects Common UnderGround Resolver
+        ["UnderGroundDetection"] = (-30), -- // When It Detects
+        
+        ["UseUnderGroundKeybind"] = (true), -- // Enable / Disable UnderGround Resolver Keybind
+        ["UnderGroundKey"] = ("]"), -- // KeyBind To Enable / Disable UnderGround Resolver
+        
+        ["SendNotification"] = (true), -- // Sends Notification When you Enabled / Disabled Stuff
+        
+        ["VisibleCheck"] = (true), -- // Checks If Target Is Visible
+        ["CrewCheck"] = (false), -- // Checks If Target Is In Your Crew
+        
+        ["TeamCheck"] = (false) -- // Checks If Player Is In the Same Team
+    }
+}
 
-Script.Functions.WTS = function (Object)
-    local ObjectVector = Camera:WorldToScreenPoint(Object.Position)
-    return Vector2.new(ObjectVector.X, ObjectVector.Y)
-end
-
-Script.Functions.OnScreen = function (Object)
-    local _, screen
-    _, screen = Camera:WorldToScreenPoint(Object.Position)
-    if screen then
-        return true
-    end
-    return false
-end
-
-Script.Functions.IsOnScreen = function (Object)
-    local IsOnScreen = Camera:WorldToScreenPoint(Object.Position)
-    return IsOnScreen
-end
-
-Script.Functions.VisibleCheck = function (Part, PartDescendant)
-    local Character = Client.Character or Client.CharacterAdded.Wait(Client.CharacterAdded)
-    local Origin = Camera.CFrame.Position
-    local _, OnScreen = Camera.WorldToViewportPoint(Camera, Part.Position)
-
-    if (OnScreen) then
-        local raycastParams = RaycastParams.new()
-        raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-        raycastParams.FilterDescendantsInstances = {Character, Camera}
-
-        local Result = Workspace.Raycast(Workspace, Origin, Part.Position - Origin, raycastParams)
-
-        if (Result) then
-            local PartHit = Result.Instance
-            local Visible = (not PartHit or Instance.new("Part").IsDescendantOf(PartHit, PartDescendant))
-            
-            return Visible
-        end
-    end
-    return false
-end
-
-Script.Functions.FilterObjs = function (Object)
-    if string.find(Object.Name, "Gun") then
-        return
-    end
-    if table.find({"Part", "MeshPart", "BasePart"}, Object.ClassName) then
-        return true
-    end
-end
-
-Script.Functions.GetClosestBodyPart = function (character)
-    local ClosestDistance = 1/0
-    local BodyPart = nil
-    
-    if (character and character:GetChildren()) then
-        for _,  x in next, character:GetChildren() do
-            if Script.Functions.FilterObjs(x) and Script.Functions.IsOnScreen(x) then
-                local Distance = (Script.Functions.WTS(x) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
-                if (Distance < ClosestDistance) then
-                    ClosestDistance = Distance
-                    BodyPart = x
-                end
-            end
-        end
-    end
-    return BodyPart
-end
-
-Script.Functions.CalculateChance = function(percentage)
-    percentage = math.floor(percentage)
-
-    local chance = math.floor(Random.new().NextNumber(Random.new(), 0, 1) * 100) / 100
-
-    return chance <= percentage / 100
-end
-
-Script.Functions.ClosestPrey2FromMouse = function()
-    local Target, Closest = nil, 1 / 0
-    local HitChance = Script.Functions.CalculateChance(getgenv().14WARE.Silent.HitChance)
-
-    if not HitChance then
-        Target = nil
-        return Target
-    end
-    for _, v in pairs(Players:GetPlayers()) do
-        if getgenv().14WARE.Silent.WallCheck then
-            if (v.Character and v ~= Client and v.Character:FindFirstChild("HumanoidRootPart")) then
-                if
-                    Camera:WorldToScreenPoint(v.Character.HumanoidRootPart.Position) and
-                        Script.Functions.VisibleCheck(v.Character.HumanoidRootPart, v.Character)
-                 then
-                    local GetClosPart = tostring(Script.Functions.GetClosestBodyPart(v.Character))
-                    local Position = Camera:WorldToScreenPoint(v.Character[GetClosPart].Position)
-                    local Distance = (Vector2.new(Position.X, Position.Y) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
-                    if GetClosPart ~= nil then
-                        if (Circle.Radius > Distance and Distance < Closest) then
-                            Closest = Distance
-                            Target = v
-                        end
-                    end
-                end
-            end
-        else
-            if (v.Character and v ~= Client and v.Character:FindFirstChild("HumanoidRootPart")) then
-                if Camera:WorldToScreenPoint(v.Character.HumanoidRootPart.Position) then
-                    local GetClosPart = tostring(Script.Functions.GetClosestBodyPart(v.Character))
-                    local Position = Camera:WorldToScreenPoint(v.Character[GetClosPart].Position)
-                    local Distance = (Vector2.new(Position.X, Position.Y) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
-                    if GetClosPart ~= nil then
-                        if (Circle.Radius > Distance and Distance < Closest) then
-                            Closest = Distance
-                            Target = v
-                        end
-                    end
-                end
-            end
-        end
-    end
-    if getgenv().14WARE.Silent.CheckIf_KO == true and Script.Functions.Alive(Target) and Target.Character:FindFirstChild("BodyEffects") then
-        local KOd = Target.Character.BodyEffects:FindFirstChild("K.O").Value
-        local Grabbed = Target.Character:FindFirstChild("GRABBING_CONSTRAINT") ~= nil
-        if KOd or Grabbed then
-            Target = nil
-            return Target
-        end
-    end
-    if getgenv().14WARE.Silent.CheckIf_TargetDeath == true and Script.Functions.Alive(Target) then
-        if Target.Character.Humanoid.health < 4 then
-            Target = nil
-            return Target
-        end
-    end
-    if getgenv().14WARE.Both.VisibleCheck == true and Script.Functions.Alive(Target) then
-        if Target.Character.Head.Transparency == 1 then
-            Target = nil
-            return Target
-        end
-    end
-    if getgenv().14WARE.Both.CrewCheck == true 
-        and Script.Functions.Alive(Target) 
-        and Script.Functions.Alive(Client) 
-        and Target:FindFirstChild("DataFolder")
-        and Target.DataFolder:FindFirstChild("Information") 
-        and Target.DataFolder.Information:FindFirstChild("Crew")
-        and Client:FindFirstChild("DataFolder")
-        and Client.DataFolder:FindFirstChild("Information") 
-        and Client.DataFolder.Information:FindFirstChild("Crew") then
-        if Target.DataFolder.Information:FindFirstChild("Crew").Value == Client.DataFolder.Information:FindFirstChild("Crew").Value then
-            Target = nil
-            return Target
-        end
-    end
-    if getgenv().14WARE.Both.TeamCheck == true and Target then
-        if Target.Team == Client.Team then
-            Target = nil
-            return Target
-        end
-    end
-    return Target
-end
-
-
-
-Script.Functions.ClosestPrey2FromMouse2 = function()
-    local Target, Closest = nil, 1 / 0
-
-    for _, v in pairs(Players:GetPlayers()) do
-        if (v.Character and v ~= Client and v.Character:FindFirstChild("HumanoidRootPart")) then
-            if getgenv().14WARE.AimAssist.UseCircleRadius then
-                local Position, OnScreen = Camera:WorldToScreenPoint(v.Character.HumanoidRootPart.Position)
-                local Distance = (Vector2.new(Position.X, Position.Y) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
-                if
-                    (AimAssistCircle.Radius > Distance and Distance < Closest and OnScreen) and
-                        Script.Functions.VisibleCheck(v.Character.HumanoidRootPart, v.Character)
-                 then
-                    Closest = Distance
-                    Target = v
-                end
-            elseif getgenv().14WARE.AimAssist.WallCheck then
-                local Position, OnScreen = Camera:WorldToScreenPoint(v.Character.HumanoidRootPart.Position)
-                local Distance = (Vector2.new(Position.X, Position.Y) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
-
-                if
-                    (Distance < Closest and OnScreen) and
-                        Script.Functions.VisibleCheck(v.Character.HumanoidRootPart, v.Character)
-                 then
-                    Closest = Distance
-                    Target = v
-                end
-            else
-                local Position, OnScreen = Camera:WorldToScreenPoint(v.Character.HumanoidRootPart.Position)
-                local Distance = (Vector2.new(Position.X, Position.Y) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
-
-                if (Distance < Closest and OnScreen) then
-                    Closest = Distance
-                    Target = v
-                end
-            end
-        end
-    end
-    if getgenv().14WARE.Both.TeamCheck == true and Target then
-        if Target.Team == Client.Team then
-            Target = nil
-            return Target
-        end
-    end
-    if getgenv().14WARE.Both.CrewCheck == true 
-        and Script.Functions.Alive(Target) 
-        and Script.Functions.Alive(Client) 
-        and Target:FindFirstChild("DataFolder")
-        and Target.DataFolder:FindFirstChild("Information") 
-        and Target.DataFolder.Information:FindFirstChild("Crew")
-        and Client:FindFirstChild("DataFolder")
-        and Client.DataFolder:FindFirstChild("Information") 
-        and Client.DataFolder.Information:FindFirstChild("Crew") then
-        if Target.DataFolder.Information:FindFirstChild("Crew").Value == Client.DataFolder.Information:FindFirstChild("Crew").Value then
-            Target = nil
-            return Target
-        end
-    end
-    if getgenv().14WARE.Both.VisibleCheck == true and Script.Functions.Alive(Target) then
-        if Target.Character.Head.Transparency == 1 then
-            Target = nil
-            return Target
-        end
-    end
-    return Target
-end
-
-
-Script.Functions.getToolName = function(name)
-    local split = string.split(string.split(name, "[")[2], "]")[1]
-    return split
-end
-
-Script.Functions.getEquippedWeaponName = function()
-    if (Client.Character) and Client.Character:FindFirstChildWhichIsA("Tool") then
-       local Tool =  Client.Character:FindFirstChildWhichIsA("Tool")
-       if string.find(Tool.Name, "%[") and string.find(Tool.Name, "%]") and not string.find(Tool.Name, "Wallet") and not string.find(Tool.Name, "Phone") then
-          return Script.Functions.getToolName(Tool.Name)
-       end
-    end
-    return nil
-end
-
-Mouse.KeyDown:Connect(function(Key)
-    local Keybind = getgenv().14WARE.AimAssist.Key:lower()
-    if (Key == Keybind) then
-        if getgenv().14WARE.AimAssist.Enabled == true then
-            IsTargetting = not IsTargetting
-            if IsTargetting then
-                Prey2 = Script.Functions.ClosestPrey2FromMouse2()
-            else
-                if Prey2 ~= nil then
-                    Prey2 = nil
-                    IsTargetting = false
-                end
-            end
-        end
-    end
-end)
-
-Mouse.KeyUp:Connect(function(Key)
-    local Keybind = getgenv().14WARE.AimAssist.Key:lower()
-    if (Key == Keybind) then
-        if getgenv().14WARE.AimAssist.Enabled == true and getgenv().14WARE.AimAssist.HoldMode == true then
-            Prey2 = nil
-            IsTargetting = false
-        end
-    end
-end)
-
-
-Mouse.KeyDown:Connect(
-    function(Key)
-        local Keybind = getgenv().14WARE.Silent.TriggerBotKey:lower()
-        if (Key == Keybind) and getgenv().14WARE.Silent.UseTriggerBotKeybind == true then
-            getgenv().14WARE.Silent.TriggerBot = not getgenv().14WARE.Silent.TriggerBot
-            if getgenv().14WARE.Both.SendNotification then
-                game.StarterGui:SetCore(
-                    "SendNotification",
-                    {
-                        Title = "14WARE",
-                        Text = "TriggerBot = " .. tostring(getgenv().14WARE.Silent.TriggerBot),
-                        Icon = "",
-                        Duration = 1
-                    }
-                )
-            end
-        end
-        local Keybind2 = getgenv().14WARE.Silent.Keybind:lower()
-        if (Key == Keybind2) and getgenv().14WARE.Silent.UseKeybind == true then
-            getgenv().14WARE.Silent.Enabled = not getgenv().14WARE.Silent.Enabled
-            if getgenv().14WARE.Both.SendNotification then
-                game.StarterGui:SetCore(
-                    "SendNotification",
-                    {
-                        Title = "14WARE",
-                        Text = "Silent Aim = " .. tostring(getgenv().14WARE.Silent.Enabled),
-                        Icon = "",
-                        Duration = 1
-                    }
-                )
-            end
-        end
-        local Keybind3 = getgenv().14WARE.Both.UnderGroundKey:lower()
-        if (Key == Keybind3) and getgenv().14WARE.Both.UseUnderGroundKeybind == true then
-            getgenv().14WARE.Both.DetectUnderGround = not getgenv().14WARE.Both.DetectUnderGround
-            if getgenv().14WARE.Both.SendNotification then
-                game.StarterGui:SetCore(
-                    "SendNotification",
-                    {
-                        Title = "14WARE",
-                        Text = "UnderGround Resolver = " .. tostring(getgenv().14WARE.Both.DetectUnderGround),
-                        Icon = "",
-                        Duration = 1
-                    }
-                )
-            end
-        end
-        local Keybind4 = getgenv().14WARE.Both.DetectDesyncKey:lower()
-        if (Key == Keybind4) and getgenv().14WARE.Both.UsDetectDesyncKeybind == true then
-            getgenv().14WARE.Both.DetectDesync = not getgenv().14WARE.Both.DetectDesync
-            if getgenv().14WARE.Both.SendNotification then
-                game.StarterGui:SetCore(
-                    "SendNotification",
-                    {
-                        Title = "14WARE",
-                        Text = "Desync Resolver = " .. tostring(getgenv().14WARE.Both.DetectDesync),
-                        Icon = "",
-                        Duration = 1
-                    }
-                )
-            end
-        end
-    end
-)
-
-
-local grmt = getrawmetatable(game)
-local backupindex = grmt.__index
-setreadonly(grmt, false)
-
-grmt.__index =
-    newcclosure(
-    function(self, v)
-        if (getgenv().14WARE.Silent.Enabled and not checkcaller() and Mouse and tostring(v) == "Hit") then
-            if getgenv().14WARE.Silent.FastRender == true then
-                Prey = Script.Functions.ClosestPrey2FromMouse()
-            end
-            if Prey and Prey.Character and Prey.Character:FindFirstChild("Humanoid") then
-                local OldVelocity = game.Players[tostring(Prey)].Character.HumanoidRootPart.Velocity
-                if DetectedDesync then
-                    local PreyMoveDirection = (game.Players[tostring(Prey)].Character.Humanoid.MoveDirection * 16)
-                    local endpoint =
-                        game.Players[tostring(Prey)].Character[getgenv().14WARE.Silent.Part].CFrame +
-                        (PreyMoveDirection * getgenv().14WARE.Silent.PredictionVelocity)
-                    return (tostring(v) == "Hit" and endpoint)
-                elseif DetectedUnderGround then
-                    local endpoint =
-                        game.Players[tostring(Prey)].Character[getgenv().14WARE.Silent.Part].CFrame +
-                        (Vector3.new(OldVelocity.X, 0, OldVelocity.Z) *
-                            getgenv().14WARE.Silent.PredictionVelocity)
-                    return (tostring(v) == "Hit" and endpoint)
-                elseif DetectedFreeFall then
-                    local endpoint =
-                        game.Players[tostring(Prey)].Character[getgenv().14WARE.Silent.Part].CFrame +
-                        (Vector3.new(
-                            OldVelocity.X,
-                            (OldVelocity.Y * getgenv().14WARE.Silent.AntiGroundValue),
-                            OldVelocity.Z
-                        ) *
-                            getgenv().14WARE.Silent.PredictionVelocity)
-                elseif getgenv().14WARE.Silent.PredictMovement then
-                    if getgenv().14WARE.Silent.Humanize then
-                        local endpoint =
-                            game.Players[tostring(Prey)].Character[getgenv().14WARE.Silent.Part].CFrame +
-                            (Vector3.new(
-                                math.random(
-                                    -getgenv().14WARE.Silent.HumanizeValue,
-                                    getgenv().14WARE.Silent.HumanizeValue
-                                ),
-                                math.random(
-                                    -getgenv().14WARE.Silent.HumanizeValue,
-                                    getgenv().14WARE.Silent.HumanizeValue
-                                ),
-                                math.random(
-                                    -getgenv().14WARE.Silent.HumanizeValue,
-                                    getgenv().14WARE.Silent.HumanizeValue
-                                )
-                            ) *
-                                0.01) +
-                            (Vector3.new(OldVelocity.X, (OldVelocity.Y * 0.5), OldVelocity.Z) * getgenv().14WARE.Silent.PredictionVelocity)
-                        return (tostring(v) == "Hit" and endpoint)
-                    else
-                        local endpoint =
-                            game.Players[tostring(Prey)].Character[getgenv().14WARE.Silent.Part].CFrame +
-                            (Vector3.new(OldVelocity.X, (OldVelocity.Y * 0.5), OldVelocity.Z) * getgenv().14WARE.Silent.PredictionVelocity)
-                        return (tostring(v) == "Hit" and endpoint)
-                    end
-                else
-                    if getgenv().14WARE.Silent.Humanize then
-                        local endpoint =
-                            game.Players[tostring(Prey)].Character[getgenv().14WARE.Silent.Part].CFrame +
-                            (Vector3.new(
-                                math.random(
-                                    -getgenv().14WARE.Silent.HumanizeValue,
-                                    getgenv().14WARE.Silent.HumanizeValue
-                                ),
-                                math.random(
-                                    -getgenv().14WARE.Silent.HumanizeValue,
-                                    getgenv().14WARE.Silent.HumanizeValue
-                                ),
-                                math.random(
-                                    -getgenv().14WARE.Silent.HumanizeValue,
-                                    getgenv().14WARE.Silent.HumanizeValue
-                                )
-                            ) *
-                                0.01)
-                        return (tostring(v) == "Hit" and endpoint)
-                    else
-                        local endpoint =
-                            game.Players[tostring(Prey)].Character[getgenv().14WARE.Silent.Part].CFrame
-                        return (tostring(v) == "Hit" and endpoint)
-                    end
-                end
-            end
-        end
-        return backupindex(self, v)
-    end
-)
-
-
-task.spawn(function ()
-    while task.wait() do
-        if getgenv().14WARE.Silent.Enabled and getgenv().14WARE.Silent.FastRender == false then
-            Prey = Script.Functions.ClosestPrey2FromMouse()
-        end
-        if Prey2 then
-            if getgenv().14WARE.AimAssist.Enabled and (Prey2.Character) and getgenv().14WARE.AimAssist.ClosestPart then
-                getgenv().14WARE.AimAssist.Part = tostring(Script.Functions.GetClosestBodyPart(Prey2.Character))
-            end
-        end
-    	if getgenv().14WARE.Silent.Enabled then
-    		if getgenv().14WARE.SilentAutoPrediction.Enable then
-                local ping = Client:GetNetworkPing() * 2000
-    		    if ping > 160 then
-    		        getgenv().14WARE.Silent.PredictionVelocity = getgenv().14WARE.SilentAutoPrediction["Over"]
-    		    elseif ping < 160 then
-    		        getgenv().14WARE.Silent.PredictionVelocity = getgenv().14WARE.SilentAutoPrediction["160"]
-    		    elseif ping < 150 then
-    		        getgenv().14WARE.Silent.PredictionVelocity = getgenv().14WARE.SilentAutoPrediction["150"]
-    		    elseif ping < 140 then
-                    getgenv().14WARE.Silent.PredictionVelocity = getgenv().14WARE.SilentAutoPrediction["140"]
-                elseif ping < 130 then
-                    getgenv().14WARE.Silent.PredictionVelocity = getgenv().14WARE.SilentAutoPrediction["130"]
-                elseif ping > 120 then
-                    getgenv().14WARE.Silent.PredictionVelocity = getgenv().14WARE.SilentAutoPrediction["120"]
-                elseif ping < 110 then
-                    getgenv().14WARE.Silent.PredictionVelocity = getgenv().14WARE.SilentAutoPrediction["110"]
-                elseif ping < 100 then
-                    getgenv().14WARE.Silent.PredictionVelocity = getgenv().14WARE.SilentAutoPrediction["100"]
-                elseif ping < 90 then
-                    getgenv().14WARE.Silent.PredictionVelocity = getgenv().14WARE.SilentAutoPrediction["90"]
-                elseif ping < 80 then
-                    getgenv().14WARE.Silent.PredictionVelocity = getgenv().14WARE.SilentAutoPrediction["80"]
-                elseif ping < 70 then
-                    getgenv().14WARE.Silent.PredictionVelocity = getgenv().14WARE.SilentAutoPrediction["70"]
-                elseif ping < 60 then
-                    getgenv().14WARE.Silent.PredictionVelocity = getgenv().14WARE.SilentAutoPrediction["60"]
-                elseif ping < 50 then
-                    getgenv().14WARE.Silent.PredictionVelocity = getgenv().14WARE.SilentAutoPrediction["50"]
-                elseif ping < 40 then
-                    getgenv().14WARE.Silent.PredictionVelocity = getgenv().14WARE.SilentAutoPrediction["40"]
-                elseif ping < 30 then
-                    getgenv().14WARE.Silent.PredictionVelocity = getgenv().14WARE.SilentAutoPrediction["30"]
-                elseif ping < 20 then
-                    getgenv().14WARE.Silent.PredictionVelocity = getgenv().14WARE.SilentAutoPrediction["20"]
-                elseif ping < 10 then
-                    getgenv().14WARE.Silent.PredictionVelocity = getgenv().14WARE.SilentAutoPrediction["10"]
-                end
-            end
-    	end
-    end
-end)
-
-Script.Functions.ResolverFunc = function ()
-	if getgenv().14WARE.Silent.Enabled then
-	    if Prey then
-    	    if Script.Functions.Alive(Prey) then
-    	        if Prey.Character:FindFirstChild(getgenv().14WARE.Silent.Part)then
-                    if getgenv().14WARE.Both.DetectDesync == true then
-                        if Prey.Character.HumanoidRootPart.Velocity.magnitude > getgenv().14WARE.Both.DesyncDetection or (Prey.Character.HumanoidRootPart.Velocity.magnitude < 1 and Prey.Character.Humanoid.MoveDirection.magnitude > 0.1) then            
-                            DetectedDesync = true
-                        else
-                            DetectedDesync = false
-                        end
-                    else
-                        if DetectedDesync ~= false then
-                            DetectedDesync = false
-                        end
-                    end
-                    if getgenv().14WARE.Silent.AntiGroundShots == true then
-                        if Prey.Character.HumanoidRootPart.Velocity.Y < getgenv().14WARE.Silent.WhenAntiGroundActivate then
-                            DetectedFreeFall = true
-                        else
-                            if DetectedFreeFall ~= false then
-                                DetectedFreeFall = false
-                            end
-                        end
-                    end
-                    if getgenv().14WARE.Both.DetectUnderGround == true then 
-                        if Prey.Character.HumanoidRootPart.Velocity.Y < getgenv().14WARE.Both.UnderGroundDetection then            
-                            DetectedUnderGround = true
-                        else
-                            DetectedUnderGround = false
-                        end
-                    else
-                        if DetectedUnderGround ~= false then
-                            DetectedUnderGround = false
-                        end
-                    end
-    	        end
-                if getgenv().14WARE.Silent.ClosestPart then
-                    getgenv().14WARE.Silent.Part = tostring(Script.Functions.GetClosestBodyPart(Prey.Character))
-                end
-                if getgenv().14WARE.Silent.UseAirPart == true then
-                    if Prey.Character.Humanoid:GetState() == Enum.HumanoidStateType.Freefall then
-                        getgenv().14WARE.Silent.Part = getgenv().14WARE.Silent.AirPart
-                    else
-                        getgenv().14WARE.Silent.Part = OldSilentAimPart
-                    end
-                end
-                 if getgenv().14WARE.Silent.TriggerBot == true  then
-					mouse1click()
-				end
-    	    end
-	    end
-	end
-    if getgenv().14WARE.AimAssist.Enabled == true then
-        if Prey2 then
-            if Script.Functions.Alive(Prey2) then
-                if getgenv().14WARE.Both.DetectDesync == true then
-                    if Prey2.Character.HumanoidRootPart.Velocity.magnitude > getgenv().14WARE.Both.DesyncDetection or (Prey2.Character.HumanoidRootPart.Velocity.magnitude < 1 and Prey2.Character.Humanoid.MoveDirection.magnitude > 0.1)then
-                        DetectedDesyncV2 = true
-                    else
-                        DetectedDesyncV2 = false
-                    end
-                else
-                    if DetectedDesyncV2 ~= false then
-                        DetectedDesyncV2 = false
-                    end
-                end
-                if getgenv().14WARE.Both.DetectUnderGround == true and Prey2.Character:FindFirstChild("HumanoidRootPart") then 
-                    if Prey2.Character.HumanoidRootPart.Velocity.Y < getgenv().14WARE.Both.UnderGroundDetection then            
-                            DetectedUnderGround2 = true
-                    else
-                        DetectedUnderGround2 = false
-                    end
-                else
-                    if DetectedUnderGround2 ~= false then
-                        DetectedUnderGround2 = false
-                    end
-                end
-            end
-        end
-    end
-end
-
-Script.Functions.AimAssistFunc = function ()
-    if getgenv().14WARE.AimAssist.Enabled == true then
-        if Prey2 then
-            if Script.Functions.Alive(Prey2) then
-        		if getgenv().14WARE.AimAssist.DisableTargetDeath == true then
-        			if Prey2.Character.Humanoid.health < 4 then
-        				Prey2 = nil
-        				IsTargetting = false
-        			end
-        		end
-        		if getgenv().14WARE.AimAssist.DisableLocalDeath == true and Script.Functions.Alive(Client) then
-        			if Client.Character.Humanoid.health < 4 then
-        				Prey2 = nil
-        				IsTargetting = false
-        			end
-        		end
-                if getgenv().14WARE.AimAssist.DisableOn_KO == true and Prey2.Character:FindFirstChild("BodyEffects") then 
-                    local KOd = Prey2.Character.BodyEffects:FindFirstChild("K.O").Value
-                    local Grabbed = Prey2.Character:FindFirstChild("GRABBING_CONSTRAINT") ~= nil
-                    if KOd or Grabbed then
-        				Prey2 = nil
-        				IsTargetting = false
-                    end
-                end
-                if getgenv().14WARE.AimAssist.DisableOutSideCircle == true then
-                    if
-                    AimAssistCircle.Radius <
-                        (Vector2.new(
-                            Camera:WorldToScreenPoint(Prey2.Character.HumanoidRootPart.Position).X,
-                            Camera:WorldToScreenPoint(Prey2.Character.HumanoidRootPart.Position).Y
-                        ) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
-                     then
-                        Prey2 = nil
-                        IsTargetting = false
-                    end
-                end
-                if Script.Functions.Alive(Prey2) and Script.Functions.OnScreen(Prey2.Character[getgenv().14WARE.AimAssist.Part]) then
-					if
-						DetectedDesyncV2 and Prey2.Character:FindFirstChild(getgenv().14WARE.AimAssist.Part) and
-							getgenv().14WARE.AimAssist.PredictMovement == true
-					 then
-						local Prey2MoveDirection = (Prey2.Character.Humanoid.MoveDirection * 16)
-						local Vector =
-							Camera:WorldToScreenPoint(
-							Prey2.Character[getgenv().14WARE.AimAssist.Part].Position +
-								(Prey2MoveDirection * getgenv().14WARE.AimAssist.PredictionVelocity)
-						)
-						local incrementX = (Vector.X - Mouse.X) * getgenv().14WARE.AimAssist.Smoothnes
-						local incrementY = (Vector.Y - Mouse.Y) * getgenv().14WARE.AimAssist.Smoothnes
-						mousemoverel(incrementX, incrementY)
-					elseif
-						DetectedUnderGround2 and Prey2.Character:FindFirstChild(getgenv().14WARE.AimAssist.Part) and
-							getgenv().14WARE.AimAssist.PredictMovement == true
-					 then
-						local Vector =
-							Camera:WorldToScreenPoint(
-							Prey2.Character[getgenv().14WARE.AimAssist.Part].Position +
-								(Vector3.new(
-									Prey2.Character[getgenv().14WARE.AimAssist.Part].Velocity.X,
-									0,
-									Prey2.Character[getgenv().14WARE.AimAssist.Part].Velocity.Z
-								) *
-									getgenv().14WARE.AimAssist.PredictionVelocity)
-						)
-						local incrementX = (Vector.X - Mouse.X) * getgenv().14WARE.AimAssist.Smoothnes
-						local incrementY = (Vector.Y - Mouse.Y) * getgenv().14WARE.AimAssist.Smoothnes
-						mousemoverel(incrementX, incrementY)
-					elseif
-						getgenv().14WARE.AimAssist.PredictMovement and
-							Prey2.Character:FindFirstChild(getgenv().14WARE.AimAssist.Part)
-					 then
-						if getgenv().14WARE.AimAssist.UseShake then
-							local Vector =
-								Camera:WorldToScreenPoint(
-								Prey2.Character[getgenv().14WARE.AimAssist.Part].Position +
-									Prey2.Character[getgenv().14WARE.AimAssist.Part].Velocity *
-										getgenv().14WARE.AimAssist.PredictionVelocity +
-									Vector3.new(
-										math.random(
-											-getgenv().14WARE.AimAssist.ShakeValue,
-											getgenv().14WARE.AimAssist.ShakeValue
-										),
-										math.random(
-											-getgenv().14WARE.AimAssist.ShakeValue,
-											getgenv().14WARE.AimAssist.ShakeValue
-										),
-										math.random(
-											-getgenv().14WARE.AimAssist.ShakeValue,
-											getgenv().14WARE.AimAssist.ShakeValue
-										)
-									) *
-										0.1
-							)
-							local incrementX = (Vector.X - Mouse.X) * getgenv().14WARE.AimAssist.Smoothnes
-							local incrementY = (Vector.Y - Mouse.Y) * getgenv().14WARE.AimAssist.Smoothnes
-							mousemoverel(incrementX, incrementY)
-						else
-							local Vector =
-								Camera:WorldToScreenPoint(
-								Prey2.Character[getgenv().14WARE.AimAssist.Part].Position +
-									Prey2.Character[getgenv().14WARE.AimAssist.Part].Velocity *
-										getgenv().14WARE.AimAssist.PredictionVelocity
-							)
-							local incrementX = (Vector.X - Mouse.X) * getgenv().14WARE.AimAssist.Smoothnes
-							local incrementY = (Vector.Y - Mouse.Y) * getgenv().14WARE.AimAssist.Smoothnes
-							mousemoverel(incrementX, incrementY)
-						end
-					elseif
-						getgenv().14WARE.AimAssist.PredictMovement == false and
-							Prey2.Character:FindFirstChild(getgenv().14WARE.AimAssist.Part)
-					 then
-						if getgenv().14WARE.AimAssist.UseShake then
-							local Vector =
-								Camera:WorldToScreenPoint(
-								Prey2.Character[getgenv().14WARE.AimAssist.Part].Position +
-									Vector3.new(
-										math.random(
-											-getgenv().14WARE.AimAssist.ShakeValue,
-											getgenv().14WARE.AimAssist.ShakeValue
-										),
-										math.random(
-											-getgenv().14WARE.AimAssist.ShakeValue,
-											getgenv().14WARE.AimAssist.ShakeValue
-										),
-										math.random(
-											-getgenv().14WARE.AimAssist.ShakeValue,
-											getgenv().14WARE.AimAssist.ShakeValue
-										)
-									) *
-										0.1
-							)
-							local incrementX = (Vector.X - Mouse.X) * getgenv().14WARE.AimAssist.Smoothnes
-							local incrementY = (Vector.Y - Mouse.Y) * getgenv().14WARE.AimAssist.Smoothnes
-							mousemoverel(incrementX, incrementY)
-						else
-							local Vector = Camera:WorldToScreenPoint(Prey2.Character[getgenv().14WARE.AimAssist.Part].Position)
-							local incrementX = (Vector.X - Mouse.X) * getgenv().14WARE.AimAssist.Smoothnes
-							local incrementY = (Vector.Y - Mouse.Y) * getgenv().14WARE.AimAssist.Smoothnes
-							mousemoverel(incrementX, incrementY)
-						end
-					end
-				end
-			end
-		end
-	end
-end
-
-Script.Functions.GunFovFunc = function ()
-    if getgenv().14WARE.GunFOV.Enabled == true then
-        local WeaponSettings = getgenv().14WARE.GunFOV[Script.Functions.getEquippedWeaponName()]
-        if WeaponSettings ~= nil then
-            getgenv().14WARE.SilentFOV.Radius = WeaponSettings.FOV
-        else
-            getgenv().14WARE.SilentFOV.Radius = getgenv().14WARE.SilentFOV.Radius
-        end
-    end
-    if getgenv().14WARE.RangeFOV.Enabled == true then
-        local WeaponSettingsV2 = getgenv().14WARE.RangeFOV[Script.Functions.getEquippedWeaponName()]
-        if WeaponSettingsV2 ~= nil and Prey then
-            if Script.Functions.Alive(Prey) then
-                if (Prey.Character.HumanoidRootPart.Position - Client.Character.HumanoidRootPart.Position).Magnitude < getgenv().14WARE.RangeFOV.Close_Activation then
-                	getgenv().14WARE.SilentFOV.Radius = WeaponSettingsV2.CLOSE
-                elseif (Prey.Character.HumanoidRootPart.Position - Client.Character.HumanoidRootPart.Position).Magnitude < getgenv().14WARE.RangeFOV.Medium_Activation then
-                	getgenv().14WARE.SilentFOV.Radius = WeaponSettingsV2.MED
-                elseif (Prey.Character.HumanoidRootPart.Position - Client.Character.HumanoidRootPart.Position).Magnitude < getgenv().14WARE.RangeFOV.Far_Activation then
-                	getgenv().14WARE.SilentFOV.Radius = WeaponSettingsV2.FAR
-                end
-            end
-        end
-    end
-end
-
-RS.Heartbeat:Connect(Script.Functions.GunFovFunc)
-
-RS.Heartbeat:Connect(Script.Functions.AimAssistFunc)
-
-RS.Heartbeat:Connect(Script.Functions.ResolverFunc)
-
-RS.Heartbeat:Connect(Script.Functions.UpdateFOV)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/0001trial/private/main/14WARE"))()
